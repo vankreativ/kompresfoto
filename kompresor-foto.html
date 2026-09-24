@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kompresor Foto — Undangan Digital</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #222222;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0f0f0;
+    --text2: #888;
+    --text3: #555;
+    --accent: #c8f55a;
+    --accent-dim: rgba(200,245,90,0.12);
+    --accent-text: #0f1a00;
+    --red: #ff5c5c;
+    --red-dim: rgba(255,92,92,0.12);
+    --sans: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 80px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .logo-mark {
+    width: 44px;
+    height: 44px;
+    background: var(--accent);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+  }
+  .logo-mark svg { width: 24px; height: 24px; }
+  h1 { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; }
+  .subtitle { font-size: 13px; color: var(--text2); margin-top: 6px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 640px;
+  }
+
+  .drop-zone {
+    padding: 48px 32px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 16px;
+    transition: background 0.2s;
+    position: relative;
+  }
+  .drop-zone:hover { background: var(--surface2); }
+  .drop-zone.drag-over { background: var(--accent-dim); border-color: var(--accent); }
+  .drop-zone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .drop-icon {
+    width: 56px; height: 56px;
+    border: 1.5px solid var(--border2);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    background: var(--surface2);
+  }
+  .drop-icon svg { width: 26px; height: 26px; stroke: var(--text2); }
+  .drop-title { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+  .drop-hint { font-size: 12px; color: var(--text2); }
+
+  .divider { height: 1px; background: var(--border); }
+
+  .controls { padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; }
+
+  .ctrl-row { display: flex; flex-direction: column; gap: 8px; }
+  .ctrl-head {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .ctrl-label { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; }
+  .ctrl-value { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%; height: 4px;
+    background: var(--border2);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+  .format-group { display: flex; gap: 8px; }
+  .fmt-btn {
+    flex: 1;
+    padding: 9px 0;
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text2);
+    font-family: var(--mono);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .fmt-btn:hover { border-color: var(--border); color: var(--text); }
+  .fmt-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-text);
+    font-weight: 500;
+  }
+
+  .result-section { display: none; }
+  .result-section.visible { display: block; }
+
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border-radius: 0 0 0 0;
+    overflow: hidden;
+  }
+  .compare-pane { background: var(--surface); }
+  .compare-img-wrap { position: relative; aspect-ratio: 4/3; overflow: hidden; }
+  .compare-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .compare-tag {
+    position: absolute; top: 10px; left: 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 9px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+  }
+  .tag-before { background: rgba(0,0,0,0.6); color: #aaa; backdrop-filter: blur(4px); }
+  .tag-after { background: var(--accent); color: var(--accent-text); }
+  .compare-meta { padding: 12px 14px; }
+  .meta-dim { font-family: var(--mono); font-size: 12px; color: var(--text2); margin-bottom: 3px; }
+  .meta-size { font-family: var(--mono); font-size: 16px; font-weight: 500; }
+
+  .summary-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .saving-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .saving-num { font-size: 32px; font-weight: 500; letter-spacing: -0.03em; }
+  .saving-good { color: var(--accent); }
+  .saving-bad { color: var(--red); }
+  .saving-sub { font-size: 12px; color: var(--text2); font-family: var(--mono); margin-top: 2px; }
+
+  .dl-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    background: var(--accent);
+    color: var(--accent-text);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 22px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: opacity 0.15s, transform 0.1s;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .dl-btn:hover { opacity: 0.88; }
+  .dl-btn:active { transform: scale(0.97); }
+  .dl-btn svg { width: 17px; height: 17px; stroke: var(--accent-text); }
+
+  .warn-pill {
+    margin: 0 24px 18px;
+    padding: 10px 14px;
+    background: var(--red-dim);
+    border: 1px solid rgba(255,92,92,0.2);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--red);
+    display: none;
+  }
+  .warn-pill.show { display: block; }
+
+  .tip-row {
+    padding: 16px 28px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    border-top: 1px solid var(--border);
+  }
+  .tip-dot {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+  .tip-text { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 0;
+    overflow: hidden;
+    display: none;
+  }
+  .progress-bar.show { display: block; }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0;
+    transition: width 0.3s ease;
+    border-radius: 0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#0f1a00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="3"/>
+      <path d="M3 9l4-4 4 4 4-5 4 5"/>
+      <circle cx="8" cy="14" r="1.5" fill="#0f1a00" stroke="none"/>
+    </svg>
+  </div>
+  <h1>Kompresor Foto</h1>
+  <p class="subtitle">Untuk undangan digital · Berjalan 100% offline di browser</p>
+</header>
+
+<div class="card">
+  <!-- Drop Zone -->
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept="image/*">
+    <div class="drop-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+    </div>
+    <div class="drop-title">Seret foto ke sini atau klik untuk pilih</div>
+    <div class="drop-hint">JPG · PNG · WebP · Semua ukuran diterima</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="ctrl-row">
+      <div class="ctrl-head">
+        <span class="ctrl-label">Kualitas</span>
+        <span class="ctrl-value" id="qualVal">80%</span>
+      </div>
+      <input type="range" id="qualSlider" min="50" max="95" value="80" step="1">
+    </div>
+
+    <div class="ctrl-row">
+      <div class="ctrl-head">
+        <span class="ctrl-label">Lebar maksimal</span>
+        <span class="ctrl-value" id="widthVal">600 px</span>
+      </div>
+      <input type="range" id="widthSlider" min="200" max="1200" value="600" step="50">
+    </div>
+
+    <div class="ctrl-row">
+      <div class="ctrl-head">
+        <span class="ctrl-label">Format output</span>
+      </div>
+      <div class="format-group">
+        <button class="fmt-btn active" data-fmt="image/webp">WebP</button>
+        <button class="fmt-btn" data-fmt="image/jpeg">JPG</button>
+        <button class="fmt-btn" data-fmt="image/png">PNG</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- Result -->
+  <div class="result-section" id="resultSection">
+    <div class="divider"></div>
+
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <div class="compare-img-wrap">
+          <img id="origImg" src="" alt="Asli">
+          <span class="compare-tag tag-before">ASLI</span>
+        </div>
+        <div class="compare-meta">
+          <div class="meta-dim" id="origDim"></div>
+          <div class="meta-size" id="origSize"></div>
+        </div>
+      </div>
+      <div class="compare-pane">
+        <div class="compare-img-wrap">
+          <img id="compImg" src="" alt="Hasil">
+          <span class="compare-tag tag-after">HASIL</span>
+        </div>
+        <div class="compare-meta">
+          <div class="meta-dim" id="compDim"></div>
+          <div class="meta-size" id="compSize"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-bar">
+      <div>
+        <div class="saving-label">Penghematan ukuran</div>
+        <div class="saving-num" id="savingNum"></div>
+        <div class="saving-sub" id="savingSub"></div>
+      </div>
+      <a id="dlBtn" class="dl-btn" download="foto_compressed.webp">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Unduh Foto
+      </a>
+    </div>
+
+    <div class="warn-pill" id="warnPill">
+      ⚠ Ukuran hasil lebih besar dari asli. Coba turunkan kualitas atau gunakan format JPG.
+    </div>
+  </div>
+
+  <!-- Tips -->
+  <div class="divider"></div>
+  <div class="tip-row">
+    <div class="tip-dot"></div>
+    <div class="tip-text">
+      <strong style="color:var(--text)">Rekomendasi untuk undangan:</strong>
+      WebP · Kualitas 75–85% · Lebar 600px → hasil ±80–200 KB, tampil tajam di semua layar.
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const dropZone   = document.getElementById('dropZone');
+  const fileInput  = document.getElementById('fileInput');
+  const qualSlider = document.getElementById('qualSlider');
+  const qualValEl  = document.getElementById('qualVal');
+  const widthSlider= document.getElementById('widthSlider');
+  const widthValEl = document.getElementById('widthVal');
+  const progressBar= document.getElementById('progressBar');
+  const progressFill=document.getElementById('progressFill');
+  const resultSec  = document.getElementById('resultSection');
+  const dlBtn      = document.getElementById('dlBtn');
+
+  let currentFile = null;
+  let currentFmt  = 'image/webp';
+  let currentExt  = 'webp';
+
+  function fmtSize(b){
+    if(b < 1024) return b + ' B';
+    if(b < 1048576) return (b/1024).toFixed(1) + ' KB';
+    return (b/1048576).toFixed(2) + ' MB';
+  }
+
+  qualSlider.oninput = () => {
+    qualValEl.textContent = qualSlider.value + '%';
+    if(currentFile) compress();
+  };
+  widthSlider.oninput = () => {
+    widthValEl.textContent = widthSlider.value + ' px';
+    if(currentFile) compress();
+  };
+
+  document.querySelectorAll('.fmt-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFmt = btn.dataset.fmt;
+      currentExt = currentFmt === 'image/webp' ? 'webp' : currentFmt === 'image/jpeg' ? 'jpg' : 'png';
+      if(currentFile) compress();
+    };
+  });
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if(f && f.type.startsWith('image/')) handleFile(f);
+  });
+  fileInput.onchange = e => { if(e.target.files[0]) handleFile(e.target.files[0]); };
+
+  function handleFile(file){
+    currentFile = file;
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('origImg').src = e.target.result;
+      compress();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function setProgress(pct){
+    progressBar.classList.add('show');
+    progressFill.style.width = pct + '%';
+    if(pct >= 100) setTimeout(() => { progressBar.classList.remove('show'); progressFill.style.width = '0'; }, 500);
+  }
+
+  function compress(){
+    if(!currentFile) return;
+    setProgress(20);
+
+    const img = new Image();
+    const objUrl = URL.createObjectURL(currentFile);
+    img.onload = () => {
+      setProgress(55);
+      const maxW = parseInt(widthSlider.value);
+      let w = img.naturalWidth, h = img.naturalHeight;
+      if(w > maxW){ h = Math.round(h * maxW / w); w = maxW; }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+      const quality = parseInt(qualSlider.value) / 100;
+      canvas.toBlob(blob => {
+        setProgress(100);
+        URL.revokeObjectURL(objUrl);
+
+        const compUrl = URL.createObjectURL(blob);
+        document.getElementById('compImg').src = compUrl;
+
+        document.getElementById('origDim').textContent = img.naturalWidth + ' × ' + img.naturalHeight + ' px';
+        document.getElementById('origSize').textContent = fmtSize(currentFile.size);
+        document.getElementById('compDim').textContent = w + ' × ' + h + ' px';
+        document.getElementById('compSize').textContent = fmtSize(blob.size);
+
+        const saving = Math.round((1 - blob.size / currentFile.size) * 100);
+        const savingEl = document.getElementById('savingNum');
+        const subEl    = document.getElementById('savingSub');
+        const warnEl   = document.getElementById('warnPill');
+
+        if(saving > 0){
+          savingEl.className = 'saving-num saving-good';
+          savingEl.textContent = saving + '%';
+          subEl.textContent = fmtSize(currentFile.size) + '  →  ' + fmtSize(blob.size);
+          warnEl.classList.remove('show');
+        } else {
+          savingEl.className = 'saving-num saving-bad';
+          savingEl.textContent = '0%';
+          subEl.textContent = 'Ukuran bertambah — coba format JPG';
+          warnEl.classList.add('show');
+        }
+
+        const fname = (currentFile.name.replace(/\.[^.]+$/, '') || 'foto') + '_compressed.' + currentExt;
+        dlBtn.href = compUrl;
+        dlBtn.download = fname;
+
+        resultSec.classList.add('visible');
+      }, currentFmt, quality);
+    };
+    img.src = objUrl;
+  }
+})();
+</script>
+</body>
+</html>
